@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Task Management System API",
   "main": "dist/server.js",
+  "engines": {
+    "node": ">=18.x"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",

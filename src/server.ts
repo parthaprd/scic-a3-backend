@@ -11,9 +11,21 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Standard CORS configuration
+const allowedOrigins = [
+  'http://localhost:3000',
+  process.env.FRONTEND_URL || '',
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: '*', // Allow requests from all origins (for ease of development and local hosting)
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, Postman)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+        return callback(null, true);
+      }
+      return callback(null, true); // permissive for now — tighten after deploy
+    },
     credentials: true,
   })
 );
@@ -42,7 +54,7 @@ app.use((err: any, req: Request, res: Response, next: any) => {
 // Start DB connection then listen
 const startServer = async () => {
   await connectDB();
-  
+
   app.listen(PORT, () => {
     console.log(`🚀 Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
     console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
