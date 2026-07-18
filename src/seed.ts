@@ -70,6 +70,32 @@ async function seed() {
 
     console.log(`✅ User ready — id: ${userId}`);
 
+    // ── 1b. Upsert the admin user ──────────────────────────────────────────────
+    const adminEmail = 'admin@example.com';
+    const adminPlainPassword = 'Admin@123';
+
+    let admin = await User.findOne({ email: adminEmail });
+
+    if (admin) {
+        console.log('⚡ Admin already exists — updating password…');
+        admin.password = await bcrypt.hash(adminPlainPassword, 10);
+        admin.name = 'Demo Admin';
+        admin.role = 'admin';
+        await admin.save();
+    } else {
+        console.log('⚡ Creating admin…');
+        const hashedAdminPassword = await bcrypt.hash(adminPlainPassword, 10);
+        admin = await User.create({
+            name: 'Demo Admin',
+            email: adminEmail,
+            password: hashedAdminPassword,
+            role: 'admin',
+            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=DemoAdmin',
+        });
+    }
+
+    console.log(`✅ Admin ready — id: ${(admin._id as mongoose.Types.ObjectId).toString()}`);
+
     // ── 2. Clear existing tasks owned by this user ─────────────────────────────
     const deleted = await Task.deleteMany({ 'createdBy.email': userEmail });
     console.log(`🗑️  Removed ${deleted.deletedCount} existing task(s) for this user`);
@@ -416,8 +442,10 @@ async function seed() {
     console.table(summary.byPriority);
 
     console.log('\n🔑 Login credentials:');
-    console.log('   Email   :', email);
-    console.log('   Password:', plainPassword);
+    console.log('   User  — Email   :', email);
+    console.log('   User  — Password:', plainPassword);
+    console.log('   Admin — Email   :', adminEmail);
+    console.log('   Admin — Password:', adminPlainPassword);
     console.log('\n🎉 Seed complete!');
 
     await mongoose.disconnect();
